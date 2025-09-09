@@ -1,19 +1,736 @@
 <!DOCTYPE html>
-<html lang='en'>
+<html lang="en" data-theme="light">
 <head>
-<meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, initial-scale=1, viewport-fit=cover'>
-<title>MedFamily — Investor Preview</title>
-<link rel='manifest' href='manifest.webmanifest'>
-<meta name='theme-color' content='#0A84FF'>
-<meta name='apple-mobile-web-app-capable' content='yes'>
-<meta name='apple-mobile-web-app-status-bar-style' content='black-translucent'>
-<link rel='apple-touch-icon' href='icons/icon-180.png'>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>MedFamily — Family Health Tracker (PWA)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0A84FF">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<style>
+:root{
+  --bg:#F2F2F7; --card:#FFFFFF; --elev:#FFFFFFFA; --text:#111827; --muted:#6B7280; --divider:#E5E5EA;
+  --tint:#0A84FF; --green:#34C759; --orange:#FF9F0A; --red:#FF453A; --shadow:0 18px 40px rgba(0,0,0,.08);
+  --radius:16px; --safe-bottom:calc(env(safe-area-inset-bottom) + 76px);
+  --fs:1; /* font scale */
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#000; --card:#1C1C1E; --elev:#1C1C1E; --text:#F2F2F7; --muted:#9CA3AF; --divider:#2C2C2E; --tint:#64D2FF; --shadow:0 24px 52px rgba(0,0,0,.6)}
+}
+[data-theme="dark"]{--bg:#000; --card:#1C1C1E; --elev:#1C1C1E; --text:#F2F2F7; --muted:#9CA3AF; --divider:#2C2C2E; --tint:#64D2FF; --shadow:0 24px 52px rgba(0,0,0,.6)}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0; background:var(--bg); color:var(--text); font-size:calc(16px * var(--fs)); font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","SF Pro Display","Segoe UI",Roboto,Helvetica,Arial}
+.small{font-size:0.78rem} .muted{color:var(--muted)} hr{border:0;border-top:1px solid var(--divider);margin:10px 0}
+.navbar{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--divider);padding:10px 16px 8px;display:flex;align-items:center;justify-content:space-between}
+.nav-title{font-weight:800;font-size:1.375rem;letter-spacing:-.02em}
+.nav-actions{display:flex;gap:10px}
+.iconbtn{background:var(--card);border:1px solid var(--divider);border-radius:12px;padding:8px;cursor:pointer;box-shadow:var(--shadow);display:flex;align-items:center;justify-content:center}
+.iconbtn svg{width:20px;height:20px;display:block}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;justify-content:space-around;align-items:center;padding:6px 10px calc(6px + env(safe-area-inset-bottom));background:color-mix(in oklab, var(--card) 94%, transparent);backdrop-filter:saturate(140%) blur(18px);border-top:1px solid var(--divider)}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);font-size:11px;font-weight:700;cursor:pointer}
+.tab.active{color:var(--tint)} .tab svg{width:22px;height:22px}
+.container{padding:14px 14px var(--safe-bottom)}
+.grid{display:grid;gap:12px} @media(min-width:920px){.grid.cols-2{grid-template-columns:1fr 1fr}.grid.cols-3{grid-template-columns:repeat(3,1fr)}}
+.card{background:var(--card);border:1px solid var(--divider);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.cell{display:flex;align-items:center;gap:12px;padding:12px 4px;border-bottom:1px solid var(--divider)} .cell:last-child{border-bottom:none}
+.kpi{display:flex;justify-content:space-between;align-items:center;border:1px solid var(--divider);border-radius:14px;padding:10px;background:linear-gradient(180deg,color-mix(in oklab,var(--tint) 14%,transparent),transparent)}
+.tag{display:inline-flex;align-items:center;height:22px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:700;border:1px solid var(--divider)}
+.tag.ok{background:rgba(52,199,89,.18);color:#1f7a37;border-color:transparent}
+.tag.warn{background:rgba(255,159,10,.18);color:#8a4b00;border-color:transparent}
+.tag.bad{background:rgba(255,69,58,.18);color:#8f1b12;border-color:transparent}
+.badge{display:inline-flex;min-width:16px;height:16px;padding:0 5px;border-radius:999px;background:var(--red);color:#fff;font-size:10px;font-weight:800;align-items:center;justify-content:center;margin-left:4px}
+label{font-size:12px;color:var(--muted);margin:6px 0 4px;display:block}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--divider);background:var(--card);color:var(--text)}
+input[type="range"]{width:100%}
+input[type="file"]{border:1px dashed var(--divider); padding:10px}
+.btn{appearance:none;border:none;border-radius:12px;padding:12px 14px;font-weight:800;cursor:pointer}
+.btn.primary{background:var(--tint);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--divider);color:var(--text)}
+.btn.flat{background:transparent;color:var(--tint);padding:8px 10px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.segment{display:inline-flex;background:var(--bg);border:1px solid var(--divider);border-radius:999px;overflow:hidden}
+.segment button{padding:6px 12px;border:0;background:transparent;font-weight:700;color:var(--muted);cursor:pointer}
+.segment button.active{background:var(--card);color:var(--text)}
+.badbtn{background:transparent;border:1px dashed var(--divider);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--muted);cursor:default}
+.sheet{position:fixed;inset:0;display:none;background:rgba(0,0,0,.35);z-index:100}
+.sheet.show{display:block}
+.sheet .panel{position:absolute;left:0;right:0;bottom:0;background:var(--elev);border-radius:22px 22px 0 0;padding:14px;border:1px solid var(--divider);max-height:82vh;overflow:auto;box-shadow:var(--shadow)}
+.sheet .grab{width:40px;height:4px;background:#c7c7cc;opacity:.7;border-radius:999px;margin:6px auto 12px}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 12px;border-radius:12px;z-index:120;display:none}
+.toast.show{display:block;animation:fade .2s ease}@keyframes fade{from{opacity:0;transform:translate(-50%,6px)}to{opacity:1;transform:translate(-50%,0)}}
+.screen{display:none}.screen.active{display:block}
+table{width:100%;border-collapse:separate;border-spacing:0 8px} th,td{padding:10px;border-bottom:1px solid var(--divider);text-align:left}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--divider);background:var(--bg);padding:8px 12px;border-radius:999px;font-size:13px;font-weight:700;color:var(--muted);cursor:pointer;user-select:none}
+.chip.active{background:var(--card);color:var(--text);box-shadow:var(--shadow)}
+.avatar{width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:#d1d5db;color:#111;font-weight:800}
+.doc-card{border:1px solid var(--divider);border-radius:12px;padding:10px;margin:6px 0;background:var(--card)}
+.doc-thumb{width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--divider)}
+.doc-row{display:flex;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--divider)}
+</style>
 </head>
 <body>
-<p>MedFamily Investor Preview bundle is installed. If you meant the full interactive HTML, open it from your deployment URL.</p>
+
+<div class="navbar">
+  <div class="nav-title" id="navTitle">MedFamily</div>
+  <div class="nav-actions">
+    <button class="iconbtn" title="Settings" aria-label="Open settings" onclick="show('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke-width="1.7"/><path d="M19 15l2-1-1-3 1-3-2-1-2-3-3 1-3-1-2 3-2 1 1 3-1 3 2 1 2 3 3-1 3 1 2-3Z" stroke-width="1.2"/></svg>
+    </button>
+  </div>
+</div>
+
+<main class="container" id="container">
+  <!-- HOME -->
+  <section class="screen active" data-screen="home">
+    <div class="grid cols-3">
+      <div class="card">
+        <div class="small muted">Family (relations viewed from Admin)</div>
+        <div class="cell" style="padding-left:0">
+          <div><strong id="countMembers">0</strong> Members</div>
+          <button class="btn flat" onclick="navigate('members')">Manage →</button>
+        </div>
+        <div class="cell" style="padding-left:0">
+          <div><strong>Care Circle</strong> <span class="muted small" id="countCare">(0)</span></div>
+          <button class="btn flat" onclick="navigate('care')">Configure →</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="small muted">Emergency</div>
+        <div class="grid">
+          <div class="cell" style="justify-content:space-between">
+            <div><div class="small muted">Local Ambulance</div><a id="ambLink" href="#" class="btn flat">Call</a></div>
+            <div><div class="small muted">Police</div><a id="polLink" href="#" class="btn flat">Call</a></div>
+          </div>
+          <div class="cell" style="justify-content:space-between">
+            <div class="small muted">Custom helpline</div>
+            <button class="btn ghost" onclick="openSheet('sheetHelpline')">Add</button>
+          </div>
+          <div id="helplineList"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="small muted">Quick Add</div>
+        <div class="grid">
+          <button class="btn primary" onclick="openSheet('sheetMeasure')">Add Reading</button>
+          <button class="btn ghost" onclick="openSheet('sheetMedicine')">Add Medicine</button>
+          <button class="btn ghost" onclick="openSheet('sheetDocument')">Add Prescription/Report</button>
+        </div>
+      </div>
+    </div>
+    <div class="grid cols-3" id="memberCards"></div>
+  </section>
+
+  <!-- MEMBERS -->
+  <section class="screen" data-screen="members">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Members</strong>
+        <div class="grid" style="grid-template-columns:auto auto auto; gap:8px">
+          <button class="btn primary" onclick="addMember()">Add Member</button>
+          <button class="btn ghost" onclick="openSheet('sheetLinkDoctor')">Link Doctor</button>
+          <button class="btn ghost" onclick="openSheet('sheetDoctor')">Add Doctor</button>
+        </div>
+      </div>
+      <div id="memberList"></div>
+    </div>
+    <div class="card">
+      <strong>Doctors</strong>
+      <div id="doctorList"></div>
+    </div>
+  </section>
+
+  <!-- MEASURE -->
+  <section class="screen" data-screen="measure">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Measurements</strong>
+        <button class="btn primary" onclick="openSheet('sheetMeasure')">Add Reading</button>
+      </div>
+      <div class="small muted">Colour-coded using normal ranges; you can customise ranges per family in Settings → Ranges.</div>
+      <table style="margin-top:8px">
+        <thead><tr><th>Member</th><th>Type</th><th>Time</th><th>Value</th><th>Status</th><th>Date</th><th>Action</th></tr></thead>
+        <tbody id="measureRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- MEDS -->
+  <section class="screen" data-screen="meds">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Medicines</strong>
+        <div class="grid" style="grid-template-columns:auto auto auto; gap:8px">
+          <button class="btn primary" onclick="openSheet('sheetMedicine')">Add Medicine</button>
+          <button class="btn ghost" onclick="openSheet('sheetMarkDose')">Mark Dose</button>
+          <button class="btn ghost" onclick="evaluateMedicineAlerts(true)">Check Missed Doses</button>
+        </div>
+      </div>
+      <table style="margin-top:8px">
+        <thead><tr><th>Member</th><th>Medicine</th><th>Dose</th><th>Schedule</th><th>Today</th></tr></thead>
+        <tbody id="medRows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- DOCUMENTS -->
+  <section class="screen" data-screen="docs">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Prescriptions & Reports</strong>
+        <div class="grid" style="grid-template-columns:auto auto; gap:8px">
+          <button class="btn primary" onclick="openSheet('sheetDocument')">Upload</button>
+          <button class="btn ghost" onclick="navigate('members')">Manage Members</button>
+        </div>
+      </div>
+      <div id="docList"></div>
+    </div>
+  </section>
+
+  <!-- ALERTS -->
+  <section class="screen" data-screen="alerts">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Alerts</strong>
+        <div class="grid" style="grid-template-columns:auto auto; gap:8px">
+          <button class="btn ghost" onclick="simulateAlerts()">Simulate Alerts</button>
+          <button class="btn flat" onclick="ackAll()">Acknowledge All</button>
+        </div>
+      </div>
+      <div class="small muted">No destructive delete: acknowledge or add correction note.</div>
+      <table style="margin-top:8px">
+        <thead><tr><th>Time</th><th>Member</th><th>Message</th><th>Severity</th><th>Notified</th><th>Status</th></tr></thead>
+        <tbody id="alertRows"><tr><td colspan="6">No alerts yet.</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- CARE -->
+  <section class="screen" data-screen="care">
+    <div class="card">
+      <div class="cell" style="justify-content:space-between">
+        <strong>Care Circle</strong>
+        <button class="btn primary" onclick="openSheet('sheetCare')">Add Contact</button>
+      </div>
+      <div id="careList"></div>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="screen" data-screen="settings">
+    <div class="card">
+      <strong>Settings</strong>
+      <div class="cell" style="justify-content:space-between">
+        <div><div class="small muted">Font size</div><input id="fsRange" type="range" min="0.9" max="1.25" step="0.05" value="1" oninput="setFontScale(this.value)"></div>
+        <div><div class="small muted">Theme</div><div class="segment"><button class="active" onclick="setTheme('light', this)">Light</button><button onclick="setTheme('dark', this)">Dark</button></div></div>
+        <div><div class="small muted">Language</div><select id="langSel" onchange="setLang(this.value)"><option value="en">English</option><option value="hi">हिन्दी</option></select></div>
+      </div>
+      <div class="cell" style="justify-content:space-between">
+        <div><div class="small muted">Ranges</div><button class="btn flat" onclick="openSheet('sheetRanges')">Edit →</button></div>
+        <div><div class="small muted">Export</div><button class="btn ghost" onclick="exportData()">Download JSON</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <div class="tab active" data-tab="home" onclick="show('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1v-10.5Z" stroke-width="1.6"/></svg><span>Home</span>
+  </div>
+  <div class="tab" data-tab="members" onclick="show('members')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="8" cy="8" r="3.5" stroke-width="1.6"/><circle cx="16" cy="8" r="3.5" stroke-width="1.6"/><path d="M2.5 20c1.2-3.5 4.5-5 6.5-5s5.3 1.5 6.5 5" stroke-width="1.6"/></svg><span>Members</span>
+  </div>
+  <div class="tab" data-tab="measure" onclick="show('measure')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 14l4-4 4 4 4-4 4 4" stroke-width="1.6"/><rect x="3" y="5" width="18" height="14" rx="3" stroke-width="1.6"/></svg><span>Measure</span>
+  </div>
+  <div class="tab" data-tab="meds" onclick="show('meds')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="7" width="18" height="10" rx="5" stroke-width="1.6"/><path d="M8 12h8" stroke-width="1.6"/></svg><span>Medicines</span>
+  </div>
+  <div class="tab" data-tab="docs" onclick="show('docs')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2" stroke-width="1.6"/><path d="M7 8h10M7 12h10M7 16h8" stroke-width="1.6"/></svg><span>Docs</span>
+  </div>
+  <div class="tab" data-tab="alerts" onclick="show('alerts')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3a6 6 0 0 1 6 6v3l1.5 2.5a1 1 0 0 1-.86 1.5H5.36a1 1 0 0 1-.86-1.5L6 12V9a6 6 0 0 1 6-6Z" stroke-width="1.6"/><path d="M10 21h4" stroke-width="1.6"/></svg><span>Alerts</span>
+  </div>
+  <div class="tab" data-tab="care" onclick="show('care')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10Z" stroke-width="1.6"/></svg><span>Care</span>
+  </div>
+  <div class="tab" data-tab="settings" onclick="show('settings')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M19 15l2-1-1-3 1-3-2-1-2-3-3 1-3-1-2 3-2 1 1 3-1 3 2 1 2 3 3-1 3 1 2-3Z" stroke-width="1.6"/></svg><span>Settings</span>
+  </div>
+</nav>
+
+<!-- SHEETS (bottom sheets) -->
+<!-- Add Member -->
+<div class="sheet" id="sheetMember" onclick="closeSheet(event,'sheetMember')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Member</strong>
+      <label>Name</label><input id="m_name" placeholder="Member name">
+      <label>Relation</label>
+      <div class="chips" id="m_rel">
+        <span class="chip" data-value="Self">Self</span><span class="chip" data-value="Father">Father</span><span class="chip" data-value="Mother">Mother</span><span class="chip" data-value="Spouse">Spouse</span><span class="chip" data-value="Son">Son</span><span class="chip" data-value="Daughter">Daughter</span><span class="chip" data-value="Sibling">Sibling</span><span class="chip" data-value="Grandparent">Grandparent</span><span class="chip" data-value="Relative">Relative</span>
+      </div>
+      <label>Sex</label><div class="segment" id="m_sex"><button class="active" data-value="M">Male</button><button data-value="F">Female</button><button data-value="O">Other</button></div>
+      <div class="row"><div><label>DOB</label><input id="m_dob" type="date" max="2100-01-01"></div><div><label>Blood group</label><input id="m_bg" placeholder="e.g., O+"></div></div>
+      <div class="row"><div><label>Height (cm)</label><input id="m_height" type="range" min="120" max="210" value="170" oninput="$('#m_height_val').textContent=this.value"><div class="small muted">Selected: <strong id="m_height_val">170</strong> cm</div></div><div><label>Weight (kg)</label><input id="m_weight" type="range" min="30" max="160" value="70" oninput="$('#m_weight_val').textContent=this.value"><div class="small muted">Selected: <strong id="m_weight_val">70</strong> kg</div></div></div>
+      <label>Conditions</label><div class="chips" id="m_cond"><span class="chip" data-value="Diabetes">Diabetes</span><span class="chip" data-value="Hypertension">Hypertension</span><span class="chip" data-value="Asthma">Asthma</span></div>
+      <label>Phone</label><input id="m_phone" inputmode="tel" placeholder="+971 5XXXXXXX">
+      <label>Email</label><input id="m_email" inputmode="email" placeholder="Email (optional)">
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px;margin-top:6px"><button class="btn primary" onclick="saveMember()">Save</button><button class="btn ghost" onclick="hide('sheetMember')">Cancel</button></div>
+      <div id="m_error" class="small" style="color:var(--red);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Doctor (free text) -->
+<div class="sheet" id="sheetDoctor" onclick="closeSheet(event,'sheetDoctor')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Doctor</strong>
+      <label>Full name</label><input id="d_name" placeholder="Dr. Name">
+      <label>Speciality</label><input id="d_spec" placeholder="Family Physician / Diabetologist">
+      <div class="row"><div><label>Phone</label><input id="d_phone" inputmode="tel" placeholder="+971 XXXXXXX"></div><div><label>Email</label><input id="d_email" inputmode="email" placeholder="doctor@example.com"></div></div>
+      <label>Address</label><textarea id="d_addr" rows="2" placeholder="Clinic address"></textarea>
+      <label>Notes</label><textarea id="d_notes" rows="2" placeholder="Timing, preferences…"></textarea>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveDoctor()">Save</button><button class="btn ghost" onclick="hide('sheetDoctor')">Cancel</button></div>
+      <div id="d_error" class="small" style="color:var(--red);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Link Doctor to Member -->
+<div class="sheet" id="sheetLinkDoctor" onclick="closeSheet(event,'sheetLinkDoctor')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Link Doctor</strong>
+      <label>Member</label><select id="ld_member"></select>
+      <label>Doctor</label><select id="ld_doctor"></select>
+      <label>Role</label><div class="chips" id="ld_role"><span class="chip active" data-value="Primary">Primary</span><span class="chip" data-value="Specialist">Specialist</span></div>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveLinkDoctor()">Link</button><button class="btn ghost" onclick="hide('sheetLinkDoctor')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Measurement -->
+<div class="sheet" id="sheetMeasure" onclick="closeSheet(event,'sheetMeasure')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Reading</strong>
+      <label>Member</label><select id="mMember"></select>
+      <label>Type</label><select id="mType"><option value="SUGAR">Sugar</option><option value="BP">BP</option><option value="TEMP">Temperature</option><option value="SPO2">SpO₂</option><option value="PULSE">Pulse</option><option value="WEIGHT">Weight</option></select>
+      <label>Time</label><div class="chips" id="mTOD"><span class="chip active" data-value="Morning">Morning</span><span class="chip" data-value="Afternoon">Afternoon</span><span class="chip" data-value="Evening">Evening</span></div>
+      <div id="mInputs"></div>
+      <label>Notes (optional)</label><input id="mNotes" placeholder="Before food, device, etc.">
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveMeasure()">Save</button><button class="btn ghost" onclick="hide('sheetMeasure')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mark Dose -->
+<div class="sheet" id="sheetMarkDose" onclick="closeSheet(event,'sheetMarkDose')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Mark Dose</strong>
+      <label>Member</label><select id="md_member" onchange="populateMemberMeds()"></select>
+      <label>Medicine</label><select id="md_rx" onchange="populateDoseSlots()"></select>
+      <label>Dose Slot</label><div class="chips" id="md_slots"></div>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveDoseMark()">Mark Taken</button><button class="btn ghost" onclick="hide('sheetMarkDose')">Cancel</button></div>
+      <div id="md_error" class="small" style="color:var(--red);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Medicine -->
+<div class="sheet" id="sheetMedicine" onclick="closeSheet(event,'sheetMedicine')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Medicine</strong>
+      <label>Member</label><select id="rxMember"></select>
+      <label>Medicine</label><input id="rxDrug" placeholder="e.g., Metformin 500 mg">
+      <label>Dose</label><input id="rxDose" placeholder="1 tab">
+      <label>Schedule</label><div class="chips" id="rxSched"><span class="chip" data-slot="Morning">Morning</span><span class="chip" data-slot="Afternoon">Afternoon</span><span class="chip" data-slot="Evening">Evening</span><span class="chip" data-slot="Bedtime">Bedtime</span></div>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveMedicine()">Save</button><button class="btn ghost" onclick="hide('sheetMedicine')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Document -->
+<div class="sheet" id="sheetDocument" onclick="closeSheet(event,'sheetDocument')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Upload Document</strong>
+      <label>Member</label><select id="docMember"></select>
+      <label>Type</label><div class="chips" id="docType"><span class="chip active" data-value="Prescription">Prescription</span><span class="chip" data-value="Report">Report</span><span class="chip" data-value="Condition">Condition Photo</span></div>
+      <label>Photo / Scan</label><input type="file" id="docFile" accept="image/*" onchange="previewDoc()">
+      <img id="docPreview" class="doc-thumb" style="display:none" alt="preview"/>
+      <label>Notes</label><input id="docNotes" placeholder="Optional">
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveDocument()">Save</button><button class="btn ghost" onclick="hide('sheetDocument')">Cancel</button></div>
+      <div id="doc_error" class="small" style="color:var(--red);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Care Contact -->
+<div class="sheet" id="sheetCare" onclick="closeSheet(event,'sheetCare')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Contact</strong>
+      <label>Name</label><input id="c_name" placeholder="Full name">
+      <label>Relation</label><div class="chips" id="c_rel"><span class="chip active" data-value="Relative">Relative</span><span class="chip" data-value="Parent">Parent</span><span class="chip" data-value="Sibling">Sibling</span><span class="chip" data-value="Spouse">Spouse</span><span class="chip" data-value="Friend">Friend</span></div>
+      <label>Phone</label><input id="c_phone" inputmode="tel" placeholder="+971 5XXXXXXX">
+      <label>Address</label><textarea id="c_addr" rows="2" placeholder="Apartment, Street, City, PIN"></textarea>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveCare()">Save</button><button class="btn ghost" onclick="hide('sheetCare')">Cancel</button></div>
+      <div id="c_error" class="small" style="color:var(--red);display:none"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Ranges -->
+<div class="sheet" id="sheetRanges" onclick="closeSheet(event,'sheetRanges')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Edit Normal Ranges</strong>
+      <div id="rangeForm"></div>
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveRanges()">Save</button><button class="btn ghost" onclick="hide('sheetRanges')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Helpline -->
+<div class="sheet" id="sheetHelpline" onclick="closeSheet(event,'sheetHelpline')">
+  <div class="panel" onclick="event.stopPropagation()">
+    <div class="grab"></div>
+    <div class="grid">
+      <strong>Add Helpline</strong>
+      <label>Label</label><input id="h_label" placeholder="Hospital / Poison Control">
+      <label>Phone</label><input id="h_phone" inputmode="tel" placeholder="+91 1XXXXXXXXX">
+      <div class="grid" style="grid-template-columns:auto auto; gap:8px"><button class="btn primary" onclick="saveHelpline()">Save</button><button class="btn ghost" onclick="hide('sheetHelpline')">Cancel</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
 <script>
-if('serviceWorker' in navigator){navigator.serviceWorker.register('./sw.js');}
+/* ------------ State & Persistence ------------- */
+const DEFAULT_RANGES={
+  SUGAR:{min:70,max:140,unit:"mg/dL"},
+  BP_SYS:{min:90,max:129,unit:"mmHg"},
+  BP_DIA:{min:60,max:84,unit:"mmHg"},
+  TEMP:{min:36.1,max:37.2,unit:"°C"},
+  SPO2:{min:95,max:100,unit:"%"},
+  PULSE:{min:60,max:100,unit:"bpm"},
+  WEIGHT:{min:30,max:300,unit:"kg"}
+};
+const STORAGE_KEY='medfamily_data_v1';
+let state = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null') || {
+  members:[
+    {id:1,name:"Father",relation:"Father",sex:"M",height_cm:168,weight_kg:70,conditions:["Diabetes","Hypertension"],dob:null,bg:"O+",phone:"+971500000",email:""},
+    {id:2,name:"Mother",relation:"Mother",sex:"F",height_cm:160,weight_kg:62,conditions:["Hypertension"],dob:null,bg:"A+",phone:"+971500111",email:""},
+    {id:3,name:"Daughter",relation:"Daughter",sex:"F",height_cm:150,weight_kg:40,conditions:[],dob:null,bg:"B+",phone:"+971500222",email:""}
+  ],
+  doctors:[{id:1,name:"Dr. Verma",spec:"Family Physician",phone:"+971555000",email:"",addr:"",notes:""}],
+  memberDoctors:[{member_id:1,doctor_id:1,role:"Primary"}],
+  measurements:[],
+  medicines:[{id:1,member_id:1,drug:"Metformin 500 mg",dose:"1 tab",schedule:["Morning","Evening"],adherence:[]}],
+  documents:[],
+  careCircle:[{id:1,name:"Admin (You)",relation:"Family Admin",phone:"+971500000",addr:""}],
+  helplines:[{label:"Hospital",phone:"tel:+91 108"}],
+  alerts:[],
+  ranges: DEFAULT_RANGES,
+  settings:{theme:'light',fs:1,lang:'en'}
+};
+function persist(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+function $(s,root=document){ return root.querySelector(s) }
+function $all(s,root=document){ return [...root.querySelectorAll(s)] }
+function toast(m){ const t=$("#toast"); t.textContent=m; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1400) }
+function initials(n){ return (n||'').split(' ').map(x=>x[0]).slice(0,2).join('').toUpperCase() }
+function dayStart(offset=0){ const d=new Date(); d.setDate(d.getDate()+offset); d.setHours(0,0,0,0); return d.getTime() }
+function sameDay(a,b){ const d1=new Date(a), d2=new Date(b); d1.setHours(0,0,0,0); d2.setHours(0,0,0,0); return d1.getTime()===d2.getTime() }
+
+/* ------------ Navigation & Settings ----------- */
+let current='home';
+function show(screen){ current=screen; $all('.screen').forEach(s=>s.classList.toggle('active', s.dataset.screen===screen)); $all('.tab').forEach(t=>t.classList.toggle('active', t.dataset.tab===screen)); $("#navTitle").textContent=({home:"MedFamily",members:"Members",measure:"Measurements",meds:"Medicines",docs:"Documents",alerts:"Alerts",care:"Care Circle",settings:"Settings"})[screen]; render(); }
+function navigate(s){ show(s) }
+function setFontScale(v){ document.documentElement.style.setProperty('--fs', v); state.settings.fs=v; persist(); }
+function setTheme(mode,btn){ document.documentElement.setAttribute('data-theme', mode); state.settings.theme=mode; persist(); if(btn){ btn.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); } }
+function setLang(l){ state.settings.lang=l; persist(); toast('Language set (demo)'); }
+
+/* ------------ Renderers ----------------- */
+function render(){
+  $("#countMembers").textContent = state.members.length;
+  $("#countCare").textContent = `(${state.careCircle.length})`;
+  renderEmergency();
+  renderMembers();
+  renderDoctors();
+  renderMeasurements();
+  renderMeds();
+  renderDocs();
+  renderAlerts();
+  renderCare();
+}
+function renderEmergency(){
+  $("#ambLink").href="tel:108";
+  $("#polLink").href="tel:112";
+  const list=$("#helplineList"); list.innerHTML = state.helplines.map((h)=>`<div class="cell" style="justify-content:space-between"><div>${h.label}</div><a class="btn flat" href="${h.phone}">${h.phone.replace('tel:','')}</a></div>`).join("");
+}
+function renderMembers(){
+  const list = $("#memberList"); if(!list) return;
+  list.innerHTML = state.members.map(m=>`<div class="cell">
+    <div class="avatar">${initials(m.name)}</div>
+    <div><div><strong>${m.name}</strong> <span class="small muted">• ${m.relation}</span></div>
+    <div class="small muted">${m.phone||''}</div></div>
+    <button class="btn flat" onclick="openSheet('sheetMeasure'); preselectMember('${m.name}')">Add reading</button>
+    <button class="btn flat" onclick="openSheet('sheetMedicine'); preselectMemberRX('${m.name}')">Add med</button>
+    <button class="btn flat" onclick="openSheet('sheetDocument'); preselectMemberDoc('${m.name}')">Add doc</button>
+  </div>`).join("");
+  const cards=$("#memberCards"); if(cards){ cards.innerHTML = state.members.map(m=>`<div class="card"><div class="cell"><div class="avatar">${initials(m.name)}</div><div><strong>${m.name}</strong><div class="small muted">${m.relation}</div></div></div><div class="kpi"><div class="small muted">Last reading</div><div class="small">${lastReading(m.id)||'—'}</div></div></div>`).join("") }
+}
+function renderDoctors(){
+  const list = $("#doctorList"); if(!list) return;
+  list.innerHTML = state.doctors.map(d=>`<div class="doc-card"><div><strong>${d.name}</strong> <span class="small muted">• ${d.spec||''}</span></div><div class="small muted">${d.phone||''} ${d.email?(' • '+d.email):''}</div><div class="small muted">${d.addr||''}</div></div>`).join("") || `<div class="small muted">No doctors added yet.</div>`;
+}
+function lastReading(member_id){
+  const r=[...state.measurements].filter(x=>x.member_id===member_id).sort((a,b)=>b.t-a.t)[0];
+  if(!r) return null;
+  const val = r.type==="SUGAR"?`${r.value1} mg/dL`:r.type==="BP"?`${r.value1}/${r.value2}`:r.type==="TEMP"?`${r.value1} °C`:r.type==="SPO2"?`${r.value1}%`:r.type==="PULSE"?`${r.value1} bpm`:`${r.value1}`;
+  return `${r.type} ${val}`;
+}
+function renderMeasurements(){
+  const body=$("#measureRows"); if(!body) return;
+  const fmt=new Intl.DateTimeFormat(navigator.language,{dateStyle:"medium",timeStyle:"short"});
+  body.innerHTML = [...state.measurements].sort((a,b)=>b.t-a.t).slice(0,80).map(m=>{
+    const member = state.members.find(x=>x.id===m.member_id)?.name || "?";
+    const val = m.type==="SUGAR"?`${m.value1} mg/dL`:m.type==="BP"?`${m.value1}/${m.value2}`:m.type==="TEMP"?`${m.value1} °C`:m.type==="SPO2"?`${m.value1}%`:m.type==="PULSE"?`${m.value1} bpm`:`${m.value1}`;
+    return `<tr><td>${member}</td><td>${m.type}</td><td>${m.tod||"-"}</td><td>${val}</td><td><span class="tag ${tagClass(m.status)}">${m.status}</span></td><td>${fmt.format(m.t)}</td><td><button class="badbtn" onclick="markMeasurementError(${m.id})">Mark error</button></td></tr>`
+  }).join("") || `<tr><td colspan="7">No measurements yet.</td></tr>`;
+}
+function renderMeds(){
+  const rows=$("#medRows"); if(!rows) return;
+  rows.innerHTML = state.medicines.map(r=>{
+    const m=state.members.find(x=>x.id===r.member_id)?.name||"?";
+    const start=dayStart(0); const rec=r.adherence.find(a=>a.date===start)||{};
+    const today=r.schedule.map(s=> rec[s]?`<span class="tag ok">${s}:✔</span>`:`<span class="tag warn">${s}:○</span>`).join(" ");
+    return `<tr><td>${m}</td><td>${r.drug}</td><td>${r.dose}</td><td>${r.schedule.join(", ")}</td><td>${today}</td></tr>`
+  }).join("") || `<tr><td colspan="5">No medicines yet.</td></tr>`;
+}
+function renderDocs(){
+  const list=$("#docList"); if(!list) return;
+  list.innerHTML = state.documents.map(d=>{
+    const m=state.members.find(x=>x.id===d.member_id)?.name||"?";
+    return `<div class="doc-row"><img class="doc-thumb" src="${d.dataURL}" alt="doc"><div><div><strong>${d.type}</strong> • ${m}</div><div class="small muted">${new Date(d.t).toLocaleString()}</div><div class="small">${d.notes||''}</div></div></div>`
+  }).join("") || `<div class="small muted">No documents uploaded yet.</div>`;
+}
+function renderAlerts(){
+  const tbody=$("#alertRows"); if(!tbody) return;
+  if(state.alerts.length===0){ tbody.innerHTML=`<tr><td colspan="6">No alerts yet.</td></tr>`; return; }
+  const fmt=new Intl.DateTimeFormat(navigator.language,{dateStyle:"medium",timeStyle:"short"});
+  tbody.innerHTML = state.alerts.slice(-80).reverse().map(a=>`<tr><td>${fmt.format(a.t)}</td><td>${a.member}</td><td>${a.message}</td><td><span class="tag ${a.severity}">${a.severity.toUpperCase()}</span></td><td>${a.notify.join(", ")}</td><td>${a.acked?"Acknowledged":"New"}</td></tr>`).join("");
+}
+function tagClass(status){ return status==="LOW"?"bad":status==="HIGH"?"bad":"ok" }
+
+/* ---------- Sheets helpers ----------- */
+function openSheet(id){ document.getElementById(id).classList.add('show'); if(id==='sheetMeasure'){populateMembers('#mMember'); buildMeasureInputs();}
+  if(id==='sheetMedicine'){populateMembers('#rxMember');}
+  if(id==='sheetMarkDose'){populateMembers('#md_member'); populateMemberMeds();}
+  if(id==='sheetDocument'){populateMembers('#docMember'); $('#docPreview').style.display='none'; $('#docFile').value='';}
+  if(id==='sheetLinkDoctor'){populateMembers('#ld_member'); populateDoctors('#ld_doctor'); attachChipHandlers('#ld_role',true);}
+  if(id==='sheetDoctor'){document.getElementById('d_error').style.display='none';}
+  if(id==='sheetRanges'){buildRangeForm();}
+}
+function hide(id){ document.getElementById(id).classList.remove('show') }
+function closeSheet(e,id){ if(e.target.classList.contains('sheet')) hide(id) }
+function populateMembers(sel){ const el=$(sel); el.innerHTML = state.members.map(m=>`<option>${m.name}</option>`).join('') }
+function populateDoctors(sel){ const el=$(sel); el.innerHTML = state.doctors.map(d=>`<option>${d.name}</option>`).join('') }
+function attachChipHandlers(root, single=false){
+  $all(root+' .chip').forEach(ch=>{ ch.onclick=(e)=>{ if(single){ e.currentTarget.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); e.currentTarget.classList.add('active'); } else { e.currentTarget.classList.toggle('active'); } } });
+}
+function getChipSingle(root){ const el=document.querySelector(root+' .chip.active'); return el?el.dataset.value:null }
+function getChips(root){ return $all(root+' .chip.active').map(c=>c.dataset.value) }
+function getSeg(root){ const el=document.querySelector(root+' button.active'); return el?el.dataset.value:null }
+function preselectMember(name){ openSheet('sheetMeasure'); $('#mMember').value=name }
+function preselectMemberRX(name){ openSheet('sheetMedicine'); $('#rxMember').value=name }
+function preselectMemberDoc(name){ openSheet('sheetDocument'); $('#docMember').value=name }
+
+/* ---------- Add Member ---------- */
+function saveMember(){
+  const name=$("#m_name").value.trim(); const relation=getChipSingle('#m_rel')||"Relative"; const sex=getSeg('#m_sex')||"M";
+  const height=+$("#m_height").value||0, weight=+$("#m_weight").value||0, dob=$("#m_dob").value||null, bg=$("#m_bg").value||"";
+  const conds=getChips('#m_cond'); const phone=$("#m_phone").value.trim(); const email=$("#m_email").value.trim();
+  if(!name){ const e=$("#m_error"); e.textContent="Name required"; e.style.display='block'; return; }
+  const id=Math.max(0,...state.members.map(m=>m.id))+1;
+  state.members.push({id,name,relation,sex,height_cm:height,weight_kg:weight,dob,bg,conditions:conds,phone,email});
+  persist(); hide('sheetMember'); toast('Member added'); render();
+}
+
+/* ---------- Doctors ---------- */
+function saveDoctor(){
+  const name=$("#d_name").value.trim(), spec=$("#d_spec").value.trim(), phone=$("#d_phone").value.trim(), email=$("#d_email").value.trim(), addr=$("#d_addr").value.trim(), notes=$("#d_notes").value.trim();
+  if(!name){ const e=$("#d_error"); e.textContent="Doctor name required"; e.style.display='block'; return; }
+  state.doctors.push({id:Date.now(),name,spec,phone,email,addr,notes}); persist(); hide('sheetDoctor'); toast('Doctor added'); render();
+}
+function saveLinkDoctor(){
+  const memName=$("#ld_member").value; const docName=$("#ld_doctor").value; const role=getChipSingle('#ld_role')||"Primary";
+  const mem=state.members.find(m=>m.name===memName); const doc=state.doctors.find(d=>d.name===docName); if(!mem||!doc) return;
+  state.memberDoctors.push({member_id:mem.id,doctor_id:doc.id,role}); persist(); hide('sheetLinkDoctor'); toast('Doctor linked'); render();
+}
+
+/* ---------- Measurements ---------- */
+function buildMeasureInputs(){
+  const wrap=$("#mInputs"); const type=$("#mType").value;
+  function row(html){ return `<div class="row">${html}</div>` }
+  if(type==="SUGAR"){ wrap.innerHTML = row(`<div><label>Value (mg/dL)</label><input id="m_v1" inputmode="decimal" placeholder="e.g., 110"></div><div><label>Fasting?</label><div class="segment" id="m_fast"><button class="active" data-value="Yes">Yes</button><button data-value="No">No</button></div></div>`); attachSegment('#m_fast') }
+  else if(type==="BP"){ wrap.innerHTML = row(`<div><label>Systolic</label><input id="m_v1" inputmode="decimal" placeholder="120"></div><div><label>Diastolic</label><input id="m_v2" inputmode="decimal" placeholder="80"></div>`) }
+  else if(type==="TEMP"){ wrap.innerHTML = row(`<div><label>Temperature (°C)</label><input id="m_v1" inputmode="decimal" placeholder="36.9"></div><div></div>`) }
+  else if(type==="SPO2"){ wrap.innerHTML = row(`<div><label>SpO₂ (%)</label><input id="m_v1" inputmode="decimal" placeholder="98"></div><div></div>`) }
+  else if(type==="PULSE"){ wrap.innerHTML = row(`<div><label>Pulse (bpm)</label><input id="m_v1" inputmode="decimal" placeholder="72"></div><div></div>`) }
+  else if(type==="WEIGHT"){ wrap.innerHTML = row(`<div><label>Weight (kg)</label><input id="m_v1" inputmode="decimal" placeholder="70"></div><div></div>`) }
+}
+function attachSegment(root){ $all(root+' button').forEach(b=> b.onclick=(e)=>{ e.currentTarget.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('active')); e.currentTarget.classList.add('active') }) }
+document.addEventListener('change', (e)=>{ if(e.target && e.target.id==='mType') buildMeasureInputs(); });
+attachChipHandlers('#mTOD', true);
+attachChipHandlers('#rxSched', false);
+function statusFor(type,v1,v2){
+  const R=state.ranges;
+  if(type==="SUGAR"){ if(v1<R.SUGAR.min) return "LOW"; if(v1>R.SUGAR.max) return "HIGH"; return "OK" }
+  if(type==="BP"){ if(v1>R.BP_SYS.max || v2>R.BP_DIA.max) return "HIGH"; if(v1<R.BP_SYS.min || v2<R.BP_DIA.min) return "LOW"; return "OK" }
+  if(type==="TEMP"){ if(v1>R.TEMP.max) return "HIGH"; if(v1<R.TEMP.min) return "LOW"; return "OK" }
+  if(type==="SPO2"){ if(v1<R.SPO2.min) return "LOW"; return "OK" }
+  if(type==="PULSE"){ if(v1>R.PULSE.max) return "HIGH"; if(v1<R.PULSE.min) return "LOW"; return "OK" }
+  if(type==="WEIGHT"){ return "OK" }
+  return "OK";
+}
+function saveMeasure(){
+  const memName=$("#mMember").value; const mem=state.members.find(m=>m.name===memName); const type=$("#mType").value; const tod=getChipSingle('#mTOD')||null;
+  const v1=parseFloat($("#m_v1")?.value||''); const v2=parseFloat($("#m_v2")?.value||'');
+  if(!mem || !type || isNaN(v1)){ toast('Please fill required fields'); return; }
+  const status=statusFor(type,v1,v2);
+  const id=Date.now();
+  state.measurements.push({id,member_id:mem.id,type,tod,value1:v1,value2:v2||null,status,t:Date.now(),notes:$("#mNotes").value.trim()});
+  if(status!=="OK"){ pushAlert(mem.name, `${type} out of range`, status==="HIGH"?"bad":"bad"); }
+  persist(); hide('sheetMeasure'); toast('Saved'); render();
+}
+function markMeasurementError(id){
+  const m=state.measurements.find(x=>x.id===id); if(!m) return; const note=prompt("Add a correction note for this entry:","Incorrect device reading"); if(note!==null){ m.correction=note; persist(); toast('Marked'); }
+}
+
+/* ---------- Medicines & Doses ---------- */
+const SLOT_HOUR={Morning:9,Afternoon:14,Evening:19,Bedtime:22};
+function saveMedicine(){
+  const memName=$("#rxMember").value; const mem=state.members.find(m=>m.name===memName); const drug=$("#rxDrug").value.trim(); const dose=$("#rxDose").value.trim()||"1 tab";
+  const slots=getChips('#rxSched'); if(!mem || !drug || slots.length===0){ toast('Member, medicine, schedule required'); return; }
+  state.medicines.push({id:Date.now(),member_id:mem.id,drug,dose,schedule:slots,adherence:[]}); persist(); hide('sheetMedicine'); toast('Medicine added'); render();
+}
+function populateMemberMeds(){
+  const memName=$("#md_member").value; const mem=state.members.find(m=>m.name===memName);
+  const sel=$("#md_rx"); const meds=state.medicines.filter(r=>r.member_id===mem.id);
+  sel.innerHTML = meds.map(r=>`<option value="${r.id}">${r.drug}</option>`).join("") || `<option disabled>No medicines</option>`;
+  populateDoseSlots();
+}
+function populateDoseSlots(){
+  const rxId=Number($("#md_rx").value); const rx=state.medicines.find(r=>r.id===rxId); const wrap=$("#md_slots");
+  if(!rx){ wrap.innerHTML='<span class="small muted">No schedule</span>'; return; }
+  wrap.innerHTML = rx.schedule.map(s=>`<span class="chip" data-value="${s}" onclick="this.parentElement.querySelectorAll('.chip').forEach(c=>c.classList.remove('active')); this.classList.add('active')">${s}</span>`).join("");
+}
+function saveDoseMark(){
+  const memName=$("#md_member").value; const mem=state.members.find(m=>m.name===memName);
+  const rxId=Number($("#md_rx").value); const slotEl=$("#md_slots .chip.active"); const slot=slotEl?slotEl.dataset.value:null;
+  const rx=state.medicines.find(r=>r.id===rxId); if(!mem || !rx || !slot){ $("#md_error").textContent="Select member, medicine and slot."; $("#md_error").style.display='block'; return; }
+  const start=dayStart(0); let rec=rx.adherence.find(a=>a.date===start); if(!rec){rec={date:start}; rx.adherence.push(rec)} rec[slot]=true;
+  persist(); hide('sheetMarkDose'); toast('Dose marked'); render();
+}
+function evaluateMedicineAlerts(force=false){
+  const now=new Date(); const start=dayStart(0);
+  state.medicines.forEach(rx=>{
+    const mem=state.members.find(m=>m.id===rx.member_id); if(!mem) return;
+    let rec=rx.adherence.find(a=>a.date===start); if(!rec){rec={date:start}; rx.adherence.push(rec)}
+    rx.schedule.forEach(slot=>{
+      const slotTime=new Date(start); slotTime.setHours(SLOT_HOUR[slot]||9,0,0,0);
+      if(now>slotTime && !rec[slot]){
+        const msg=`Missed ${slot} dose of ${rx.drug}`;
+        if(force || !state.alerts.some(a=>a.member===mem.name && a.message===msg && sameDay(a.t,start))){ pushAlert(mem.name,msg,'warn'); }
+      }
+    });
+  });
+  renderAlerts();
+}
+
+/* ---------- Documents ---------- */
+function previewDoc(){
+  const file=$("#docFile").files[0]; if(!file) return; const reader=new FileReader(); reader.onload=(e)=>{ const img=$("#docPreview"); img.src=e.target.result; img.style.display='block'; }; reader.readAsDataURL(file);
+}
+function saveDocument(){
+  const memName=$("#docMember").value; const mem=state.members.find(m=>m.name===memName); const type=getChipSingle('#docType')||'Prescription'; const f=$("#docFile").files[0]; const notes=$("#docNotes").value.trim();
+  if(!mem || !f){ $("#doc_error").textContent="Member and image required"; $("#doc_error").style.display='block'; return; }
+  const reader=new FileReader(); reader.onload=(e)=>{ state.documents.push({id:Date.now(),member_id:mem.id,type,dataURL:e.target.result,notes,t:Date.now()}); persist(); hide('sheetDocument'); toast('Uploaded'); render(); }; reader.readAsDataURL(f);
+}
+
+/* ---------- Care Circle ---------- */
+function saveCare(){
+  const name=$("#c_name").value.trim(); const relation=getChipSingle('#c_rel')||'Relative'; const phone=$("#c_phone").value.trim(); const addr=$("#c_addr").value.trim();
+  if(!name || !phone){ const e=$("#c_error"); e.textContent="Name and phone required"; e.style.display='block'; return; }
+  state.careCircle.push({id:Date.now(),name,relation,phone,addr}); persist(); hide('sheetCare'); toast('Contact added'); renderCare();
+}
+function renderCare(){ const list=$("#careList"); if(!list) return; list.innerHTML = state.careCircle.map(c=>`<div class="cell"><div><strong>${c.name}</strong><div class="small muted">${c.relation} • ${c.phone}</div><div class="small muted">${c.addr||''}</div></div></div>`).join("") }
+
+/* ---------- Ranges ---------- */
+function buildRangeForm(){
+  const r=state.ranges; const f=$("#rangeForm");
+  f.innerHTML = `
+  <div class="row"><div><label>Sugar min</label><input id="rg_SUGAR_min" value="${r.SUGAR.min}"></div><div><label>Sugar max</label><input id="rg_SUGAR_max" value="${r.SUGAR.max}"></div></div>
+  <div class="row"><div><label>BP SYS max</label><input id="rg_BP_SYS_max" value="${r.BP_SYS.max}"></div><div><label>BP DIA max</label><input id="rg_BP_DIA_max" value="${r.BP_DIA.max}"></div></div>
+  <div class="row"><div><label>Temp max (°C)</label><input id="rg_TEMP_max" value="${r.TEMP.max}"></div><div><label>SpO₂ min (%)</label><input id="rg_SPO2_min" value="${r.SPO2.min}"></div></div>
+  <div class="row"><div><label>Pulse min</label><input id="rg_PULSE_min" value="${r.PULSE.min}"></div><div><label>Pulse max</label><input id="rg_PULSE_max" value="${r.PULSE.max}"></div></div>`;
+}
+function saveRanges(){
+  const r=state.ranges;
+  r.SUGAR.min=parseFloat($("#rg_SUGAR_min").value); r.SUGAR.max=parseFloat($("#rg_SUGAR_max").value);
+  r.BP_SYS.max=parseFloat($("#rg_BP_SYS_max").value); r.BP_DIA.max=parseFloat($("#rg_BP_DIA_max").value);
+  r.TEMP.max=parseFloat($("#rg_TEMP_max").value); r.SPO2.min=parseFloat($("#rg_SPO2_min").value);
+  r.PULSE.min=parseFloat($("#rg_PULSE_min").value); r.PULSE.max=parseFloat($("#rg_PULSE_max").value);
+  persist(); hide('sheetRanges'); toast('Ranges saved');
+}
+
+/* ---------- Alerts ---------- */
+function pushAlert(member,msg,severity='warn'){
+  const notify = state.careCircle.map(c=>c.name);
+  state.alerts.push({t:Date.now(),member:member,message:msg,severity,notify,acked:false});
+  persist();
+}
+function simulateAlerts(){ pushAlert("Father","SpO₂ dropped to 90%","bad"); pushAlert("Mother","Missed Evening dose","warn"); renderAlerts(); toast('Alerts generated') }
+function ackAll(){ state.alerts.forEach(a=>a.acked=true); persist(); renderAlerts(); toast('Acknowledged') }
+
+/* ---------- Helplines ---------- */
+function saveHelpline(){ const label=$("#h_label").value.trim(); const phone=$("#h_phone").value.trim(); if(!label||!phone){toast('Both fields required');return} state.helplines.push({label,phone:"tel:"+phone.replace('tel:','')}); persist(); hide('sheetHelpline'); renderEmergency(); toast('Added') }
+
+/* ---------- Export ---------- */
+function exportData(){
+  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state,null,2));
+  const a=document.createElement('a'); a.setAttribute('href', dataStr); a.setAttribute('download','medfamily-data.json'); a.click();
+}
+
+/* ---------- Init ---------- */
+function init(){
+  setTheme(state.settings.theme); setFontScale(state.settings.fs); $("#langSel").value=state.settings.lang;
+  render();
+  populateMembers('#mMember'); populateMembers('#rxMember'); populateMembers('#docMember'); populateMembers('#md_member');
+  if('serviceWorker' in navigator){ navigator.serviceWorker.register('./sw.js').catch(()=>{}) }
+}
+init();
 </script>
+
 </body>
 </html>
